@@ -34,6 +34,35 @@ public class PlayerInteractionInput : MonoBehaviour
         LookValue = look.action.ReadValue<Vector2>();
     }
 
-    private void OnGrab(InputAction.CallbackContext ctx) => SendMessage("TryGrab", SendMessageOptions.DontRequireReceiver);
-    private void OnPlace(InputAction.CallbackContext ctx) => SendMessage("TryPlace", SendMessageOptions.DontRequireReceiver);
+    private void OnGrab(InputAction.CallbackContext ctx)
+    {
+        if (GameManager.Instance != null)
+            GameManager.Instance.StartGame();
+
+        SendMessage("TryGrab", SendMessageOptions.DontRequireReceiver);
+    }
+
+    private void OnPlace(InputAction.CallbackContext ctx)
+    {
+        if (GameManager.Instance != null)
+            GameManager.Instance.StartGame();
+
+        SendMessage("TryPlace", SendMessageOptions.DontRequireReceiver);
+    }
+
+    public void GrabFromUI()
+    {
+        if (GameManager.Instance != null)
+            GameManager.Instance.StartGame();
+
+        SendMessage("TryGrab", SendMessageOptions.DontRequireReceiver);
+    }
+
+    public void PlaceFromUI()
+    {
+        if (GameManager.Instance != null)
+            GameManager.Instance.StartGame();
+
+        SendMessage("TryPlace", SendMessageOptions.DontRequireReceiver);
+    }
 }

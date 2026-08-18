@@ -1,67 +1,113 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class CubeManipulator : MonoBehaviour
 {
+    [Header("Referencias")]
     [SerializeField] private Camera playerCamera;
-    [SerializeField] private float grabDistance = 8f;
     [SerializeField] private Transform holdAnchor;
+
+    [Header("Distancias y Ajustes")]
+    [SerializeField] private float grabDistance = 10f;
+
+    [Tooltip("Distancia a la que se mantendrá el cubo respecto a la cámara al agarrarlo (Aumenta este valor para alejarlo)")]
+    [SerializeField] private float holdDistance = 4.5f; // <--- Aumentamos de 2f a 4.5f (o lo que prefieras)
+
+    [Tooltip("Inclinación del rayo hacia el suelo (0 = al frente, 0.3 = inclinado hacia abajo)")]
+    [SerializeField] private float downwardAngle = 0.3f;
+
+    [Header("Capas")]
     [SerializeField] private LayerMask cubeLayer;
-    [SerializeField] private LayerMask placementSurfaceLayer; // Suelo y superficies donde colocar
 
     private Rigidbody heldCube;
+    private Collider heldCollider;
+
+    private void Update()
+    {
+        if (heldCube != null)
+        {
+            UpdateHeldCubePosition();
+        }
+    }
+
+    private void UpdateHeldCubePosition()
+    {
+        if (playerCamera == null || heldCube == null)
+            return;
+
+        // Si hay HoldAnchor lo usa, pero si no, o si quieres usar holdDistance directamente:
+        Vector3 targetPosition = (holdAnchor != null)
+            ? holdAnchor.position
+            : playerCamera.transform.position + playerCamera.transform.forward * holdDistance;
+
+        heldCube.transform.position = targetPosition;
+        heldCube.transform.rotation = Quaternion.identity;
+    }
 
     public void TryGrab()
     {
-        if (heldCube != null) return;
+        if (GameManager.Instance != null)
+            GameManager.Instance.StartGame();
+
+        if (heldCube != null)
+            return;
+
+        if (playerCamera == null) return;
 
         Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-        if (Physics.Raycast(ray, out RaycastHit hit, grabDistance, cubeLayer))
+        Vector3 directionDown = (ray.direction - Vector3.up * downwardAngle).normalized;
+
+        if (Physics.Raycast(ray.origin, directionDown, out RaycastHit hit, grabDistance, cubeLayer))
         {
             if (hit.rigidbody != null)
             {
                 heldCube = hit.rigidbody;
+                heldCollider = heldCube.GetComponent<Collider>();
+
+                heldCube.linearVelocity = Vector3.zero;
+                heldCube.angularVelocity = Vector3.zero;
                 heldCube.isKinematic = true;
 
-                // Desactiva colisiones mientras lo llevas
-                if (heldCube.TryGetComponent<Collider>(out Collider col))
+                if (heldCollider != null)
                 {
-                    col.enabled = false;
+                    heldCollider.enabled = false;
                 }
 
-                heldCube.transform.SetParent(holdAnchor);
-                heldCube.transform.localPosition = Vector3.zero;
-                heldCube.transform.localRotation = Quaternion.identity;
+                UpdateHeldCubePosition();
             }
+        }
+        else
+        {
+            if (GameManager.Instance != null)
+                GameManager.Instance.RegisterError();
         }
     }
 
     public void TryPlace()
     {
-        if (heldCube == null) return;
-
-        Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-
-        // Si apuntas al suelo o a otro cubo dentro del rango, lo posiciona exactamente en el punto de impacto
-        if (Physics.Raycast(ray, out RaycastHit hit, grabDistance, placementSurfaceLayer))
+        if (heldCube == null)
         {
-            // Coloca el cubo justo en la superficie detectada
-            heldCube.transform.SetParent(null);
-            heldCube.transform.position = hit.point + (hit.normal * 0.5f); // 0.5f evita que se cruce con la superficie
-            heldCube.transform.rotation = Quaternion.identity; // Lo mantiene alineado y recto
-        }
-        else
-        {
-            // Si apuntas al aire, simplemente lo suelta frente a ti
-            heldCube.transform.SetParent(null);
+            if (GameManager.Instance != null)
+                GameManager.Instance.RegisterError();
+
+            return;
         }
 
-        // Reactiva la f�sica y colisiones
-        if (heldCube.TryGetComponent<Collider>(out Collider col))
+        Rigidbody cubeToRelease = heldCube;
+
+        if (heldCollider != null)
         {
-            col.enabled = true;
+            heldCollider.enabled = true;
         }
 
-        heldCube.isKinematic = false;
+        cubeToRelease.transform.rotation = Quaternion.identity;
+
+        cubeToRelease.isKinematic = false;
+        cubeToRelease.useGravity = true;
+
+        cubeToRelease.linearVelocity = Vector3.zero;
+        cubeToRelease.angularVelocity = Vector3.zero;
+
         heldCube = null;
+        heldCollider = null;
     }
 }
