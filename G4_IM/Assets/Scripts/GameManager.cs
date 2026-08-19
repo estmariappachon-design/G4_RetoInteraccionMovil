@@ -21,6 +21,10 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject finishPanel;
     [SerializeField] private TMP_Text finalTimeText;
     [SerializeField] private TMP_Text finalErrorsText;
+    [Header("Controles durante la partida")]
+    [SerializeField] private GameObject joystick;
+    [SerializeField] private GameObject crosshair;
+    [SerializeField] private GameObject[] buttons;
 
     private float elapsedTime;
     private int errors;
@@ -109,11 +113,27 @@ public class GameManager : MonoBehaviour
         if (finishPanel != null)
             finishPanel.SetActive(true);
 
-        if (finalTimeText != null)
-            finalTimeText.text = "Tiempo: " + FormatTime(elapsedTime);
+        // Ocultar controles al finalizar la partida
+        if (joystick != null)
+            joystick.SetActive(false);
 
-        if (finalErrorsText != null)
-            finalErrorsText.text = "Errores: " + errors;
+        if (crosshair != null)
+            crosshair.SetActive(false);
+
+        if (buttons != null)
+        {
+            foreach (GameObject button in buttons)
+            {
+                if (button != null)
+                    button.SetActive(false);
+            }
+        }
+
+if (finalTimeText != null)
+    finalTimeText.text = "Tiempo: " + FormatTime(elapsedTime);
+
+if (finalErrorsText != null)
+    finalErrorsText.text = "Errores: " + errors;
     }
 
     private void UpdateUI()

@@ -1,0 +1,2 @@
+C:\Users\EQTMCS-1353\Documents\INFO_CAMILA\Universidad\MATERIAS\VIDEOJUEGOS\G4_RetoInteraccionMovil\G4_IM\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\CMakeLists.txt
+C:\Users\EQTMCS-1353\Documents\INFO_CAMILA\Universidad\MATERIAS\VIDEOJUEGOS\G4_RetoInteraccionMovil\G4_IM\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\CMakeLists.txt
