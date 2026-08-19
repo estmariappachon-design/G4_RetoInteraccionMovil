@@ -5,16 +5,12 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
-    [Header("Cubos y Zona")]
+    [Header("Referencias de Apilado")]
+    [Tooltip("Arrastra aquí tu objeto STACK_ZONE que contiene el script StackZone")]
+    [SerializeField] private StackZone stackZone;
+
+    [Tooltip("Arrastra aquí los 4 cubos jugables")]
     [SerializeField] private Transform[] cubes;
-    [SerializeField] private Transform stackZone;
-
-    [Header("Configuración de Apilado")]
-    [Tooltip("Tamaño/Altura de tus cubos actuales")]
-    [SerializeField] private float cubeSize = 2f;
-
-    [Tooltip("Margen de tolerancia horizontal (radio en la zona)")]
-    [SerializeField] private float positionTolerance = 0.8f;
 
     [Header("UI")]
     [SerializeField] private TMP_Text timerText;
@@ -76,34 +72,22 @@ public class GameManager : MonoBehaviour
 
     private void CheckStack()
     {
-        if (!gameStarted || stackZone == null || cubes == null || cubes.Length == 0)
+        if (!gameStarted || stackZone == null)
             return;
 
-        int count = 0;
+        // Consultar el conteo real directamente al Trigger de STACK_ZONE
+        int count = stackZone.GetCubeCount();
 
-        // Comprobar cuántos cubos están dentro de la STACK_ZONE
-        foreach (Transform cube in cubes)
+        if (correctlyPlaced != count)
         {
-            if (cube == null) continue;
-
-            // Distancia horizontal (X, Z) desde la zona
-            float horizontalDistance = Vector2.Distance(
-                new Vector2(cube.position.x, cube.position.z),
-                new Vector2(stackZone.position.x, stackZone.position.z)
-            );
-
-            // Si el cubo está posicionado dentro del radio de la zona de apilado
-            if (horizontalDistance <= positionTolerance)
-            {
-                count++;
-            }
+            correctlyPlaced = count;
+            UpdateUI();
         }
 
-        correctlyPlaced = count;
-        UpdateUI();
+        int totalCubes = (cubes != null && cubes.Length > 0) ? cubes.Length : 4;
 
-        // Si los 4 cubos están en la zona
-        if (correctlyPlaced >= cubes.Length)
+        // Victoria cuando todos los cubos requeridos están en la zona
+        if (correctlyPlaced >= totalCubes)
         {
             FinishGame();
         }
@@ -115,6 +99,12 @@ public class GameManager : MonoBehaviour
         gameStarted = false;
 
         UpdateUI();
+
+        // Reproduce el efecto opcional de victoria sobre la canción en bucle
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayVictorySFX();
+        }
 
         if (finishPanel != null)
             finishPanel.SetActive(true);
@@ -130,8 +120,10 @@ public class GameManager : MonoBehaviour
     {
         UpdateTimerUI();
 
+        int totalCubes = (cubes != null && cubes.Length > 0) ? cubes.Length : 4;
+
         if (cubesText != null)
-            cubesText.text = "Cubos: " + correctlyPlaced + " / " + cubes.Length;
+            cubesText.text = "Cubos: " + correctlyPlaced + " / " + totalCubes;
 
         if (errorsText != null)
             errorsText.text = "Errores: " + errors;
